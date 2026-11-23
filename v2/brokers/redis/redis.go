@@ -149,7 +149,6 @@ func (b *Broker) StartConsuming(consumerTag string, concurrency int, taskProcess
 			case <-b.GetStopChan():
 				return
 			case <-stopConsumer:
-				close(deliveries)
 				return
 			default:
 				task, err := b.nextDelayedTask(b.redisDelayedTasksKey)
@@ -298,6 +297,7 @@ func (b *Broker) consume(deliveries <-chan []byte, concurrency int, taskProcesso
 	for {
 		select {
 		case err := <-errorsChan:
+			close(stopConsumer)
 			for v := range deliveries {
 				b.requeueMessage(v, taskProcessor)
 			}
